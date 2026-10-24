@@ -1,8 +1,10 @@
 
 streamlit
-torch
-transformers
+torch>=2.5
+transformers==4.51.3
 sentencepiece
 sacremoses
+numpy>=2.1
 IndicTransToolkit
+
 
