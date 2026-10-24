@@ -6,5 +6,8 @@ sentencepiece
 sacremoses
 numpy>=2.1
 IndicTransToolkit
+streamlit-mic-recorder
+gTTS
+
 
 
