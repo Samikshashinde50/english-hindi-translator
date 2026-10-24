@@ -2,7 +2,7 @@
 import streamlit as st
 import torch
 from transformers import AutoTokenizer, AutoModelForSeq2SeqLM
-from IndicTransToolkit.processor import IndicProcessor
+from IndicTransToolkit import IndicProcessor
 
 st.set_page_config(
     page_title="BhashaBridge | Indian Language Translator",
