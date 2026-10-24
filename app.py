@@ -1,8 +1,13 @@
-
+import os
 import streamlit as st
 import torch
 from transformers import AutoTokenizer, AutoModelForSeq2SeqLM
 from IndicTransToolkit import IndicProcessor
+
+try:
+    HF_TOKEN = st.secrets["HF_TOKEN"]
+except Exception:
+    HF_TOKEN = os.getenv("HF_TOKEN")
 
 st.set_page_config(
     page_title="BhashaBridge | Indian Language Translator",
@@ -48,11 +53,15 @@ def load_indic_model():
     tokenizer = AutoTokenizer.from_pretrained(
         INDIC_MODEL_ID,
         trust_remote_code=True,
+        token=HF_TOKEN,
     )
+
     model = AutoModelForSeq2SeqLM.from_pretrained(
         INDIC_MODEL_ID,
         trust_remote_code=True,
+        token=HF_TOKEN,
     )
+
     model.eval()
     processor = IndicProcessor(inference=True)
     return tokenizer, model, processor
