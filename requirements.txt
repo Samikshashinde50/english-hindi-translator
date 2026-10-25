@@ -1,13 +1,12 @@
-
-streamlit
-torch>=2.5
+streamlit>=1.40,<2.0
+torch==2.6.0
 transformers==4.51.3
+IndicTransToolkit
 sentencepiece
 sacremoses
-numpy>=2.1
-IndicTransToolkit
+accelerate
 streamlit-mic-recorder
 gTTS
-
-
+langdetect
+numpy<2.3
 
