@@ -1,7 +1,9 @@
+
 import os
 import html
 import json
 from io import BytesIO
+
 import streamlit as st
 import streamlit.components.v1 as components
 import torch
@@ -36,12 +38,14 @@ st.markdown(
         padding-top: 1.5rem;
         padding-bottom: 2.5rem;
     }
+
     .app-header {
         display: flex;
         align-items: center;
         gap: 14px;
         margin-bottom: 6px;
     }
+
     .app-logo {
         background: #3157D5;
         color: white;
@@ -54,6 +58,7 @@ st.markdown(
         font-size: 28px;
         flex-shrink: 0;
     }
+
     .app-title {
         color: var(--text-color);
         font-size: 30px;
@@ -61,19 +66,29 @@ st.markdown(
         margin: 0;
         line-height: 1.3;
     }
+
     .app-subtitle, .panel-description, .status-note {
         color: var(--text-color);
         opacity: 0.72;
         font-size: 13px;
     }
-    .app-subtitle { font-size: 14px; margin-top: 3px; }
+
+    .app-subtitle {
+        font-size: 14px;
+        margin-top: 3px;
+    }
+
     .panel-heading {
         font-size: 21px;
         font-weight: 700;
         color: var(--text-color);
         margin-bottom: 4px;
     }
-    .panel-description { margin-bottom: 15px; }
+
+    .panel-description {
+        margin-bottom: 15px;
+    }
+
     .translation-result {
         color: var(--text-color);
         background: var(--secondary-background-color);
@@ -86,25 +101,37 @@ st.markdown(
         white-space: pre-wrap;
         overflow-wrap: anywhere;
     }
+
     .result-label {
         color: var(--text-color);
         font-size: 16px;
         font-weight: 700;
         margin-bottom: 10px;
     }
-    div[data-testid="stVerticalBlockBorderWrapper"] { border-radius: 16px; }
+
+    div[data-testid="stVerticalBlockBorderWrapper"] {
+        border-radius: 16px;
+    }
+
     .stButton > button, .stDownloadButton > button {
         border-radius: 10px;
         min-height: 42px;
         font-weight: 600;
     }
+
     div[data-testid="stTextArea"] textarea {
         border-radius: 12px;
         line-height: 1.6;
     }
+
     @media (max-width: 768px) {
-        .block-container { padding: 1rem; }
-        .app-title { font-size: 24px; }
+        .block-container {
+            padding: 1rem;
+        }
+
+        .app-title {
+            font-size: 24px;
+        }
     }
     </style>
     """,
@@ -147,27 +174,55 @@ LANGUAGES = {
 }
 
 VOICE_CODES = {
-    "English": "en", "Assamese": "as", "Bengali": "bn",
-    "Gujarati": "gu", "Hindi": "hi", "Kannada": "kn",
-    "Malayalam": "ml", "Marathi": "mr", "Nepali": "ne",
-    "Odia": "or", "Punjabi": "pa", "Tamil": "ta",
-    "Telugu": "te", "Urdu": "ur",
+    "English": "en",
+    "Assamese": "as",
+    "Bengali": "bn",
+    "Gujarati": "gu",
+    "Hindi": "hi",
+    "Kannada": "kn",
+    "Malayalam": "ml",
+    "Marathi": "mr",
+    "Nepali": "ne",
+    "Odia": "or",
+    "Punjabi": "pa",
+    "Tamil": "ta",
+    "Telugu": "te",
+    "Urdu": "ur",
 }
 
 TTS_CODES = {
-    "Assamese": "as", "Bengali": "bn", "English": "en",
-    "Gujarati": "gu", "Hindi": "hi", "Kannada": "kn",
-    "Malayalam": "ml", "Marathi": "mr", "Nepali": "ne",
-    "Odia": "or", "Punjabi": "pa", "Tamil": "ta",
-    "Telugu": "te", "Urdu": "ur",
+    "Assamese": "as",
+    "Bengali": "bn",
+    "English": "en",
+    "Gujarati": "gu",
+    "Hindi": "hi",
+    "Kannada": "kn",
+    "Malayalam": "ml",
+    "Marathi": "mr",
+    "Nepali": "ne",
+    "Odia": "or",
+    "Punjabi": "pa",
+    "Tamil": "ta",
+    "Telugu": "te",
+    "Urdu": "ur",
 }
 
 DETECT_MAP = {
-    "as": "Assamese", "bn": "Bengali", "en": "English",
-    "gu": "Gujarati", "hi": "Hindi", "kn": "Kannada",
-    "ml": "Malayalam", "mr": "Marathi", "ne": "Nepali",
-    "or": "Odia", "pa": "Punjabi", "sa": "Sanskrit",
-    "ta": "Tamil", "te": "Telugu", "ur": "Urdu",
+    "as": "Assamese",
+    "bn": "Bengali",
+    "en": "English",
+    "gu": "Gujarati",
+    "hi": "Hindi",
+    "kn": "Kannada",
+    "ml": "Malayalam",
+    "mr": "Marathi",
+    "ne": "Nepali",
+    "or": "Odia",
+    "pa": "Punjabi",
+    "sa": "Sanskrit",
+    "ta": "Tamil",
+    "te": "Telugu",
+    "ur": "Urdu",
 }
 
 
@@ -209,11 +264,11 @@ def clear_workspace():
 # ---------------------------------------------------------
 
 def get_hf_token():
-    """Read HF_TOKEN from Streamlit Secrets or environment."""
     try:
         token = st.secrets.get("HF_TOKEN")
     except Exception:
         token = None
+
     return token or os.getenv("HF_TOKEN")
 
 
@@ -223,27 +278,31 @@ def get_hf_token():
 
 def detect_source_language(text):
     text = text.strip()
+
     if not text:
         return None, "Enter text before detecting the language."
 
     try:
         detected = detect(text)
         language = DETECT_MAP.get(detected)
+
         if language in LANGUAGES:
             return language, "Language detected automatically."
+
     except LangDetectException:
         pass
 
-    # Script-based fallback. These are guesses, not guaranteed detection.
     if any("\u0900" <= c <= "\u097F" for c in text):
         return "Hindi", (
             "The text uses Devanagari script. Hindi is only a tentative "
             "guess; Marathi and other languages may use the same script."
         )
+
     if any("\u0980" <= c <= "\u09FF" for c in text):
         return "Bengali", (
             "The text uses Bengali script. Please confirm the language."
         )
+
     if any("\u0600" <= c <= "\u06FF" for c in text):
         return "Urdu", (
             "The text uses an Arabic-based script. Please confirm the language."
@@ -258,53 +317,60 @@ def detect_source_language(text):
 
 @st.cache_resource(show_spinner=False, max_entries=1)
 def load_translation_model(model_id, token):
-    """
-    Cache only one model to reduce memory use.
-    IndicTrans2 model repositories may require accepting HF conditions.
-    """
+
     device = "cuda" if torch.cuda.is_available() else "cpu"
 
     load_args = {"trust_remote_code": True}
+
     if token:
         load_args["token"] = token
 
     try:
-        tokenizer = AutoTokenizer.from_pretrained(model_id, **load_args)
+        tokenizer = AutoTokenizer.from_pretrained(
+            model_id,
+            **load_args
+        )
 
         model_args = dict(load_args)
+
         if device == "cuda":
             model_args["torch_dtype"] = torch.float16
 
         model = AutoModelForSeq2SeqLM.from_pretrained(
             model_id,
-            **model_args,
+            **model_args
         )
+
         model.to(device)
         model.eval()
 
         processor = IndicProcessor(inference=True)
+
         return tokenizer, model, processor, device
 
     except Exception as exc:
+
         message = str(exc)
         lowered = message.lower()
 
         if any(term in lowered for term in (
-            "401", "403", "gated repo", "access to model",
-            "restricted", "unauthorized"
+            "401",
+            "403",
+            "gated repo",
+            "access to model",
+            "restricted",
+            "unauthorized"
         )):
             raise RuntimeError(
-                "Hugging Face denied access to this model. Open the model "
-                "page on Hugging Face, sign in, accept its access conditions "
-                "if shown, create a Read token, and add it as HF_TOKEN in "
-                "Streamlit Cloud → App settings → Secrets."
+                "Hugging Face denied access to this model. "
+                "Open the model page on Hugging Face, sign in, "
+                "accept its access conditions if shown, create a Read token, "
+                "and add it as HF_TOKEN in Streamlit Cloud Secrets."
             ) from exc
 
         if "out of memory" in lowered:
             raise RuntimeError(
-                "The server ran out of memory while loading the translation "
-                "model. The IndicTrans2 model may be too large for the "
-                "available Streamlit Cloud memory."
+                "The server ran out of memory while loading the model."
             ) from exc
 
         raise RuntimeError(
@@ -317,35 +383,44 @@ def load_translation_model(model_id, token):
 # ---------------------------------------------------------
 
 def translate_text(text, source_name, target_name):
+
     text = text.strip()
 
     if not text:
         raise ValueError("Please enter or speak some text first.")
+
     if source_name not in LANGUAGES:
         raise ValueError("Please select a valid input language.")
+
     if target_name not in LANGUAGES:
         raise ValueError("Please select a valid target language.")
+
     if source_name == target_name:
-        raise ValueError("Input and target languages must be different.")
+        raise ValueError(
+            "Input and target languages must be different."
+        )
 
     source_code = LANGUAGES[source_name]
     target_code = LANGUAGES[target_name]
 
     if source_name == "English":
         model_id = MODEL_EN_INDIC
+
     elif target_name == "English":
         model_id = MODEL_INDIC_EN
+
     else:
         model_id = MODEL_INDIC_INDIC
 
     tokenizer, model, processor, device = load_translation_model(
-        model_id, get_hf_token()
+        model_id,
+        get_hf_token()
     )
 
     prepared = processor.preprocess_batch(
         [text],
         src_lang=source_code,
-        tgt_lang=target_code,
+        tgt_lang=target_code
     )
 
     inputs = tokenizer(
@@ -354,29 +429,40 @@ def translate_text(text, source_name, target_name):
         padding="longest",
         max_length=256,
         return_tensors="pt",
-        return_attention_mask=True,
+        return_attention_mask=True
     )
-    inputs = {key: value.to(device) for key, value in inputs.items()}
+
+    inputs = {
+        key: value.to(device)
+        for key, value in inputs.items()
+    }
 
     with torch.inference_mode():
+
         generated_tokens = model.generate(
             **inputs,
             use_cache=True,
             min_length=0,
             max_length=256,
             num_beams=4,
-            num_return_sequences=1,
+            num_return_sequences=1
         )
 
     decoded = tokenizer.batch_decode(
         generated_tokens,
         skip_special_tokens=True,
-        clean_up_tokenization_spaces=True,
+        clean_up_tokenization_spaces=True
     )
-    results = processor.postprocess_batch(decoded, lang=target_code)
+
+    results = processor.postprocess_batch(
+        decoded,
+        lang=target_code
+    )
 
     if not results or not results[0].strip():
-        raise RuntimeError("The model returned an empty translation.")
+        raise RuntimeError(
+            "The model returned an empty translation."
+        )
 
     return results[0].strip(), model_id
 
@@ -386,26 +472,39 @@ def translate_text(text, source_name, target_name):
 # ---------------------------------------------------------
 
 def create_audio(text, language_name):
+
     text = text.strip()
+
     if not text:
-        raise ValueError("Translate some text before generating audio.")
+        raise ValueError(
+            "Translate some text before generating audio."
+        )
 
     code = TTS_CODES.get(language_name)
+
     if not code:
         raise ValueError(
             f"Text-to-speech is not configured for {language_name}."
         )
 
     available_languages = gtts_lang.tts_langs()
+
     if code not in available_languages:
         raise ValueError(
             f"gTTS does not currently list support for {language_name}."
         )
 
     audio_buffer = BytesIO()
-    speech = gTTS(text=text, lang=code, slow=False)
+
+    speech = gTTS(
+        text=text,
+        lang=code,
+        slow=False
+    )
+
     speech.write_to_fp(audio_buffer)
     audio_buffer.seek(0)
+
     return audio_buffer.getvalue()
 
 
@@ -419,13 +518,17 @@ st.markdown(
         <div class="app-logo">🌐</div>
         <div>
             <div class="app-title">LanguageBridge</div>
-            <div class="app-subtitle">Translate naturally. Speak confidently.</div>
+            <div class="app-subtitle">
+                Translate naturally. Speak confidently.
+            </div>
         </div>
     </div>
     """,
-    unsafe_allow_html=True,
+    unsafe_allow_html=True
 )
+
 st.write("")
+
 st.caption(
     "Translate between English and supported Indian languages. "
     "Enter text or use voice input."
@@ -436,112 +539,144 @@ st.caption(
 # 11. DASHBOARD
 # ---------------------------------------------------------
 
-left_col, right_col = st.columns([3, 7], gap="large")
+left_col, right_col = st.columns(
+    [3, 7],
+    gap="large"
+)
 
 
 # LEFT: SETTINGS
+
 with left_col:
+
     with st.container(border=True):
+
         st.markdown(
             '<div class="panel-heading">⚙️ Language Settings</div>',
-            unsafe_allow_html=True,
+            unsafe_allow_html=True
         )
+
         st.markdown(
-            '<div class="panel-description">Choose the source and target languages.</div>',
-            unsafe_allow_html=True,
+            '<div class="panel-description">'
+            'Choose the source and target languages.</div>',
+            unsafe_allow_html=True
         )
 
         source_options = ["Auto-detect"] + list(LANGUAGES.keys())
+
         source_language = st.selectbox(
             "Input language",
             options=source_options,
             index=0,
             key="source_language_select",
-            help="Automatic detection is approximate. Manual selection is more reliable.",
+            help="Automatic detection is approximate. "
+                 "Manual selection is more reliable."
         )
+
         target_language = st.selectbox(
             "Translate into",
             options=list(LANGUAGES.keys()),
             index=list(LANGUAGES.keys()).index("Hindi"),
-            key="target_language_select",
+            key="target_language_select"
         )
 
         st.divider()
+
         st.markdown("**Translation controls**")
 
         translated_text = st.session_state.translation_result
+
         if translated_text:
+
             file_name = (
                 f"translation_{target_language.lower().replace(' ', '_')}.txt"
             )
+
             st.download_button(
                 "⬇️ Download translation",
                 data=translated_text,
                 file_name=file_name,
                 mime="text/plain",
                 use_container_width=True,
-                key="download_translation",
+                key="download_translation"
             )
+
         else:
+
             st.button(
                 "⬇️ Download translation",
                 disabled=True,
                 use_container_width=True,
-                help="Translate your text first.",
+                help="Translate your text first."
             )
 
         st.button(
             "🗑️ Clear translation",
             on_click=clear_translation,
-            use_container_width=True,
+            use_container_width=True
         )
+
         st.button(
             "🧹 Clear workspace",
             on_click=clear_workspace,
-            use_container_width=True,
+            use_container_width=True
         )
 
         st.divider()
+
         st.markdown("**Selected languages**")
+
         source_display = (
             "Automatic detection"
             if source_language == "Auto-detect"
             else source_language
         )
+
         st.caption(f"From: {source_display}")
         st.caption(f"To: {target_language}")
+
         st.markdown(
-            '<div class="status-note">Model: AI4Bharat IndicTrans2<br>'
-            'Translation quality depends on the language pair and input.</div>',
-            unsafe_allow_html=True,
+            '<div class="status-note">'
+            'Model: AI4Bharat IndicTrans2<br>'
+            'Translation quality depends on the language pair and input.'
+            '</div>',
+            unsafe_allow_html=True
         )
 
 
 # RIGHT: WORKSPACE
+
 with right_col:
+
     with st.container(border=True):
+
         st.markdown(
-            '<div class="panel-heading">✍️ Translation Workspace</div>',
-            unsafe_allow_html=True,
+            '<div class="panel-heading">'
+            '✍️ Translation Workspace</div>',
+            unsafe_allow_html=True
         )
+
         st.markdown(
-            '<div class="panel-description">Type your text or speak into the microphone.</div>',
-            unsafe_allow_html=True,
+            '<div class="panel-description">'
+            'Type your text or speak into the microphone.</div>',
+            unsafe_allow_html=True
         )
 
         voice_language = (
-            "en" if source_language == "Auto-detect"
+            "en"
+            if source_language == "Auto-detect"
             else VOICE_CODES.get(source_language, "en")
         )
 
         st.markdown("**Enter or speak your text**")
+
         voice_text = speech_to_text(
             language=voice_language,
             start_prompt="🎙️ Start speaking",
             stop_prompt="⏹️ Stop recording",
             just_once=True,
             use_container_width=True,
-            key="voice_input",
+            key="voice_input"
         )
 
         if (
@@ -549,6 +684,7 @@ with right_col:
             and voice_text.strip()
             and voice_text != st.session_state.last_spoken_text
         ):
+
             st.session_state.source_text = voice_text.strip()
             st.session_state.last_spoken_text = voice_text
 
@@ -557,158 +693,244 @@ with right_col:
             key="source_text",
             height=175,
             placeholder="Enter your text here...\n\nExample: Hello, how are you?",
-            label_visibility="collapsed",
+            label_visibility="collapsed"
         )
 
         button_col1, button_col2 = st.columns(2)
+
         with button_col1:
+
             translate_clicked = st.button(
                 "🌐 Translate",
                 type="primary",
                 use_container_width=True,
-                key="translate_button",
+                key="translate_button"
             )
+
         with button_col2:
+
             detect_clicked = st.button(
                 "🔎 Detect language",
                 use_container_width=True,
-                key="detect_button",
+                key="detect_button"
             )
 
+        # LANGUAGE DETECTION
+
         if detect_clicked:
+
             detected_name, detection_note = detect_source_language(
                 st.session_state.source_text
             )
+
             if detected_name:
+
                 st.session_state.detected_language = detected_name
-                st.info(f"Likely language: **{detected_name}**. {detection_note}")
+
+                st.info(
+                    f"Likely language: **{detected_name}**. "
+                    f"{detection_note}"
+                )
+
             else:
+
                 st.warning(detection_note)
 
+        # TRANSLATION BUTTON
+
         if translate_clicked:
+
             text_to_translate = st.session_state.source_text.strip()
+
             if not text_to_translate:
-                st.warning("Please enter or speak some text first.")
+
+                st.warning(
+                    "Please enter or speak some text first."
+                )
+
             else:
+
                 actual_source = source_language
+
                 if actual_source == "Auto-detect":
+
                     detected_name, detection_note = detect_source_language(
                         text_to_translate
                     )
+
                     if not detected_name:
+
                         st.error(
                             "I could not detect the input language. "
                             "Choose it manually from Input language."
                         )
+
                         st.stop()
+
                     actual_source = detected_name
+
                     st.info(
                         f"Detected input language: **{actual_source}**. "
                         f"{detection_note}"
                     )
 
                 if actual_source == target_language:
+
                     st.error(
                         "Input and target languages are the same. "
                         "Choose a different target language."
                     )
+
                 else:
+
                     with st.spinner(
                         f"Translating {actual_source} to {target_language}..."
                     ):
+
                         try:
+
                             result, model_id = translate_text(
                                 text_to_translate,
                                 actual_source,
-                                target_language,
+                                target_language
                             )
+
                             st.session_state.translation_result = result
                             st.session_state.translation_audio = None
+
                             st.session_state.last_translation_pair = (
                                 f"{actual_source} → {target_language}"
                             )
+
                             st.session_state.detected_language = actual_source
+
                             st.success(
                                 f"Translation complete: "
                                 f"{actual_source} → {target_language}"
                             )
+
+                        # UPDATED ERROR HANDLING
                         except Exception as exc:
-                            st.error(str(exc))
+
+                            st.error(
+                                f"Translation failed: {exc}"
+                            )
+
+                            # Displays complete traceback in the app
+                            st.exception(exc)
 
         st.divider()
+
         st.markdown(
-            '<div class="result-label">📝 Translation Result</div>',
-            unsafe_allow_html=True,
+            '<div class="result-label">'
+            '📝 Translation Result</div>',
+            unsafe_allow_html=True
         )
 
         translated_text = st.session_state.translation_result
+
         if translated_text:
-            # Escape model output before placing it in HTML.
-            safe_result = html.escape(translated_text).replace("\n", "<br>")
+
+            safe_result = html.escape(
+                translated_text
+            ).replace("\n", "<br>")
+
             st.markdown(
-                f'<div class="translation-result">{safe_result}</div>',
-                unsafe_allow_html=True,
+                f'<div class="translation-result">'
+                f'{safe_result}</div>',
+                unsafe_allow_html=True
             )
 
             if st.session_state.last_translation_pair:
-                st.caption(st.session_state.last_translation_pair)
+
+                st.caption(
+                    st.session_state.last_translation_pair
+                )
 
             encoded_text = json.dumps(translated_text)
+
             components.html(
                 f"""
                 <button id="copyTranslationButton"
-                    style="padding:10px 16px;border-radius:9px;border:1px solid #777;
-                    cursor:pointer;font-size:14px;font-weight:600;
+                    style="padding:10px 16px;border-radius:9px;
+                    border:1px solid #777;cursor:pointer;
+                    font-size:14px;font-weight:600;
                     background:#3157D5;color:white;">
                     📋 Copy translation
                 </button>
-                <span id="copyStatus" style="margin-left:10px;font-size:13px;"></span>
+
+                <span id="copyStatus"
+                    style="margin-left:10px;font-size:13px;">
+                </span>
+
                 <script>
                     const textToCopy = {encoded_text};
-                    const copyButton = document.getElementById("copyTranslationButton");
-                    const copyStatus = document.getElementById("copyStatus");
+
+                    const copyButton =
+                        document.getElementById("copyTranslationButton");
+
+                    const copyStatus =
+                        document.getElementById("copyStatus");
+
                     copyButton.addEventListener("click", async () => {{
+
                         try {{
+
                             await navigator.clipboard.writeText(textToCopy);
                             copyStatus.textContent = "Copied!";
+
                         }} catch (error) {{
+
                             copyStatus.textContent =
                                 "Copy unavailable. Please select the text.";
+
                         }}
+
                     }});
                 </script>
                 """,
-                height=55,
+                height=55
             )
 
             st.markdown("**🔊 Listen to the translation**")
+
             if st.button(
                 "Generate voice audio",
                 use_container_width=False,
-                key="generate_audio",
+                key="generate_audio"
             ):
+
                 with st.spinner("Generating audio..."):
+
                     try:
+
                         st.session_state.translation_audio = create_audio(
-                            translated_text, target_language
+                            translated_text,
+                            target_language
                         )
+
                     except Exception as exc:
+
                         st.session_state.translation_audio = None
                         st.warning(str(exc))
 
             if st.session_state.translation_audio:
+
                 st.audio(
                     st.session_state.translation_audio,
-                    format="audio/mp3",
+                    format="audio/mp3"
                 )
+
                 st.download_button(
                     "⬇️ Download audio",
                     data=st.session_state.translation_audio,
                     file_name="translation_audio.mp3",
                     mime="audio/mpeg",
-                    key="download_audio",
+                    key="download_audio"
                 )
+
         else:
+
             st.markdown(
                 """
                 <div class="translation-result">
@@ -718,7 +940,7 @@ with right_col:
                     </span>
                 </div>
                 """,
-                unsafe_allow_html=True,
+                unsafe_allow_html=True
             )
 
 
@@ -727,14 +949,17 @@ with right_col:
 # ---------------------------------------------------------
 
 st.write("")
+
 st.markdown(
     """
-    <div style="text-align:center;padding:12px;color:var(--text-color);
-                opacity:0.65;font-size:12px;">
+    <div style="text-align:center;padding:12px;
+                color:var(--text-color);opacity:0.65;font-size:12px;">
+
         LanguageBridge · Powered by AI4Bharat IndicTrans2<br>
+
         Automatic language detection and speech support may vary by language.
+
     </div>
     """,
-    unsafe_allow_html=True,
+    unsafe_allow_html=True
 )
-
